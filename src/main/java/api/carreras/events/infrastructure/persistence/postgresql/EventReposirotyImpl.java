@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -18,10 +17,8 @@ import org.springframework.stereotype.Component;
 
 import api.carreras.events.domain.Event;
 import api.carreras.events.infrastructure.DomainPersistence;
-import api.carreras.shared.domain.Builder;
 import api.carreras.shared.domain.Logger;
 import api.carreras.shared.domain.exception.RepositoryException;
-import api.carreras.shared.infrastructure.PaginationConstant;
 import api.carreras.shared.infrastructure.persistence.Pagination;
 
 @Component
@@ -90,12 +87,18 @@ public class EventReposirotyImpl implements DomainPersistence {
         try {
 
             return eventRepository.save(event);
+        } catch (ConstraintViolationException e) {
+            Logger.log(e.getMessage());
+
+            // ERROR: duplicate key value violates unique constraint "users_un"
+            
+            if (e.getMessage().contains("constraint [users_un]")) {
+                return null;
+            }
+        }
         } catch (Exception e) {
             Logger.log(e.getMessage());
 
-            if (e.getMessage().contains("constraint [events_un]")) {
-                return null;
-            }
 
             throw new RepositoryException("Internal Server Error");
         }
